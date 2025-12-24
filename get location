@@ -1,0 +1,40 @@
+import xml.etree.ElementTree as ET
+from datetime import datetime
+import pytz
+
+Load the GPX file,
+gpx_file_path = "/content/yamap_2023-08-20_12_06.gpx" # Modified file path
+tree = ET.parse(gpx_file_path)
+root = tree.getroot()
+
+Define GPX namespace,
+ns = {'default': 'http://www.topografix.com/GPX/1/1'%7D
+
+Extract all track points with time, latitude, longitude, elevation,
+track_points = []
+for trkpt in root.findall('.//default:trkpt', ns):
+    lat = float(trkpt.get('lat'))
+    lon = float(trkpt.get('lon'))
+    ele_elem = trkpt.find('default:ele', ns)
+    time_elem = trkpt.find('default:time', ns)
+    if ele_elem is not None and time_elem is not None:
+        ele = float(ele_elem.text)
+        # Parse time and convert to datetime object
+        time = datetime.fromisoformat(time_elem.text.replace("Z", "+00:00"))
+        track_points.append({'time': time, 'lat': lat, 'lon': lon, 'ele': ele})
+
+Convert to JST (UTC+9),
+jst = pytz.timezone('Asia/Tokyo')
+for point in track_points:
+    point['time_jst'] = point['time'].astimezone(jst)
+
+Find the point closest to 2023年8月20日 15時27分 JST,
+Create a datetime object for the target time in JST,
+target_time_str = "2023-08-20 15:27" # Updated time and date
+target_time = datetime.strptime(target_time_str, "%Y-%m-%d %H:%M")
+Localize the target time to JST, assuming the input time is in JST,
+target_time_jst = jst.localize(target_time)
+
+
+closest_point = min(track_points, key=lambda p: abs(p['time_jst'] - target_time_jst))
+closest_point
